@@ -1,25 +1,56 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import axios from "axios";
+import TemplateList from "./components/TemplateList";
+import WorkflowForm from "./components/WorkflowForm";
+import Runner from "./components/Runner";
+import "./styles.css";
 
-function App() {
+const API = "/api";
+
+export default function App() {
+  const [license, setLicense] = useState("DEV-KEY");
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [workflow, setWorkflow] = useState(null);
+
+  const loadTemplates = async () => {
+    try {
+      const res = await axios.get(`${API}/templates`, {
+        headers: { "X-License-Key": license },
+      });
+      setTemplates(res.data.templates);
+    } catch (err) {
+      alert(err.response?.data?.error || "Failed to load templates");
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="container">
+      <h1>BizBot — Guided Automation Assistant</h1>
+
+      <div className="card">
+        <label>License Key:</label>
+        <input
+          value={license}
+          onChange={(e) => setLicense(e.target.value)}
+          placeholder="Enter license key"
+        />
+        <button onClick={loadTemplates}>Load Templates</button>
+      </div>
+
+      {!selectedTemplate && (
+        <TemplateList templates={templates} onSelect={setSelectedTemplate} />
+      )}
+
+      {selectedTemplate && !workflow && (
+        <WorkflowForm
+          license={license}
+          template={selectedTemplate}
+          setWorkflow={setWorkflow}
+        />
+      )}
+
+      {workflow && <Runner license={license} workflow={workflow} />}
     </div>
   );
 }
-
-export default App;
